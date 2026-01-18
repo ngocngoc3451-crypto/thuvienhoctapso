@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư Viện Số - Kho tài liệu ôn thi THPT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary: #3292ff; --bg: #f0f2f5; --white: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding: 0; }
+
+        header { background: var(--primary); color: var(--white); padding: 1.5rem; text-align: center; }
+        header h1 { margin: 0; font-size: 1.8rem; }
+
+        .filter-section {
+            background: var(--white);
+            padding: 1.5rem;
+            margin: 20px auto;
+            max-width: 1000px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-weight: bold; font-size: 0.9rem; color: #333; }
+        select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; min-width: 200px; font-size: 1rem; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 15px 50px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+        .card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: 0.3s;
+            border-left: 5px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+
+        .tags { margin-bottom: 10px; display: flex; gap: 5px; flex-wrap: wrap; }
+        .tag { font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+        .tag-sub { background: #e3f2fd; color: #1565c0; }
+        .tag-cat { background: #f3e5f5; color: #7b1fa2; }
+        .tag-lv { background: #e8f5e9; color: #2e7d32; }
+
+        .card h3 { margin: 0 0 10px; font-size: 1.1rem; color: #333; flex-grow: 1; }
+
+        .actions { margin-top: 15px; display: flex; gap: 10px; }
+        .btn {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-view { background: #e0e0e0; color: #333; }
+        .btn-view:hover { background: #d6d6d6; }
+        .btn-down { background: var(--primary); color: white; }
+        .btn-down:hover { opacity: 0.9; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1><i class="fas fa-book-open"></i> Kho Tài Liệu Hỗ Trợ Ôn Thi THPT <i class="fas fa-book-open"></i></h1>
+    <p>Hệ thống tài liệu kiến thức hỗ trợ các em ôn thi THPT</p>
+</header>
+
+<div class="filter-section">
+    <div class="filter-group">
+        <label>Môn học:</label>
+        <select id="monhoc" onchange="loctailieu()">
+            <option value="all">📚 Tất cả các môn</option>
+            <option value="Toán">Toán học</option>
+            <option value="Lý">Vật Lý</option>
+            <option value="Sinh">Sinh học</option>
+        </select>
+    </div>
+
+    <div class="filter-group">
+        <label>Loại tài liệu:</label>
+        <select id="loaitailieu" onchange="kiemtrahienmucdo()">
+            <option value="all">📂 Tất cả loại tài liệu</option>
+            <option value="Kiến thức trọng tâm">📖 Kiến thức trọng tâm</option>
+            <option value="Câu hỏi ôn luyện">📝 Câu hỏi ôn luyện</option>
+            <option value="Đáp án">✅ Đáp án chi tiết</option>
+        </select>
+    </div>
+
+    <div class="filter-group hidden" id="mucdoContainer">
+        <label>Mức độ:</label>
+        <select id="mucdo" onchange="loctailieu()">
+            <option value="all">🎯 Tất cả mức độ</option>
+            <option value="Nhận biết">Mức 1: Nhận biết</option>
+            <option value="Thông hiểu">Mức 2: Thông hiểu</option>
+            <option value="Vận dụng">Mức 3: Vận dụng</option>
+            <option value="Vận dụng cao" id="vd_cao">Mức 4: Vận dụng cao</option>
+        </select>
+    </div>
+</div>
+
+<div class="container">
+    <div id="gridtailieu" class="grid"></div>
+    <p id="thongbaotrong" class="hidden" style="text-align:center;color:#666;margin-top:20px;">
+        Không tìm thấy tài liệu phù hợp với bộ lọc đã chọn!
+    </p>
+</div>
+
+<script>
+    // =======================
+    // 1. DỮ LIỆU TÀI LIỆU
+    // =======================
+    // --- KIẾN THỨC TRỌNG TÂM  ---
+    const danhsachtailieu = [
+        { title: "Kiến thức trọng tâm môn Toán", subject: "Toán", type: "Kiến thức trọng tâm", level: "", link: "https://drive.google.com/file/d/1dBcdi0jDqW8eeRPPqKnSAcZsaxZ3uDxV/view?usp=sharing" },
+        { title: "Kiến thức trọng tâm môn Lý", subject: "Lý", type: "Kiến thức trọng tâm", level: "", link: "https://drive.google.com/file/d/19zmKqK1qSh1r_qUcq_Pkx_5JHI9ulqj0/view?usp=sharing" },
+        { title: "Kiến thức trọng tâm môn Sinh", subject: "Sinh", type: "Kiến thức trọng tâm", level: "", link: "https://drive.google.com/file/d/1CwdfhhOda3z_gagVKkLEsnQd8GUtGRK6/view?usp=sharing" },
+    
+    // --- CÂU HỎI ÔN LUYỆN  ---
+        { title: "Bộ câu hỏi ôn tập môn Toán mức độ nhận biết", subject: "Toán", type: "Câu hỏi ôn luyện", level: "Nhận biết", link: "https://drive.google.com/file/d/1tSWX0H94R6RiwxXK0vTjBOCpAGCgRr79/view?usp=sharing" },
+        { title: "Bộ câu hỏi ôn tập môn Toán mức độ thông hiểu", subject: "Toán", type: "Câu hỏi ôn luyện", level: "Thông hiểu", link: "https://drive.google.com/file/d/1wY5spP6eSMnhuMeRGFtA95HSwP8Z0Xsl/view?usp=sharing" },
+        { title: "Bộ câu hỏi ôn tập môn Toán mức độ vận dụng", subject: "Toán", type: "Câu hỏi ôn luyện", level: "Vận dụng", link: "https://drive.google.com/file/d/1HrvzdMx8PFuds-bDD2vru0FvEWvvxpmy/view?usp=sharing" },
+        { title: "Bộ câu hỏi ôn tập môn Toán mức độ vận dụng cao", subject: "Toán", type: "Câu hỏi ôn luyện", level: "Vận dụng cao", link: "https://drive.google.com/file/d/15H2CMf9BWtCNesHZmc5c3uDeybDFHQTM/view?usp=sharing" },
+    
+        { title: "Bộ câu hỏi ôn tập môn Lý mức độ nhận biết", subject: "Lý", type: "Câu hỏi ôn luyện", level: "Nhận biết", link: "https://drive.google.com/file/d/1mwbkbOLrjsHr5YnYj666fYasgQ9Rxe0W/view?usp=sharing" },
+        { title: "Bộ câu hỏi ôn tập môn Lý mức độ thông hiểu", subject: "Lý", type: "Câu hỏi ôn luyện", level: "Thông hiểu", link: "https://drive.google.com/file/d/1xf88IFA5rkr9ocUfdy8NDRmGELbgmalG/view?usp=sharing" },
+        { title: "Bộ câu hỏi ôn tập môn Lý mức độ vận dụng", subject: "Lý", type: "Câu hỏi ôn luyện", level: "Vận dụng", link: "https://drive.google.com/file/d/159sxLXNvxuHSEClN5OxUSFgGO9GR-K8g/view?usp=sharing" },
+        { title: "Bộ câu hỏi ôn tập môn Lý mức độ vận dụng cao", subject: "Lý", type: "Câu hỏi ôn luyện", level: "Vận dụng cao", link: "https://drive.google.com/file/d/19kFnBDC07xdQSeQa7y1PNYnTNa5GunLP/view?usp=sharing" },
+
+        { title: "Bộ câu hỏi ôn tập môn Sinh mức độ nhận biết", subject: "Sinh", type: "Câu hỏi ôn luyện", level: "Nhận biết", link: "https://drive.google.com/file/d/1LW_g_Jm1ddEpi1HVnbwLNqI_6DyOCP37/view?usp=sharing" },
+        { title: "Bộ câu hỏi ôn tập môn Sinh mức độ thông hiểu", subject: "Sinh", type: "Câu hỏi ôn luyện", level: "Thông hiểu", link: "https://drive.google.com/file/d/1j7eLmo9y3Ff45-LUSN0wtNxX054fzxqq/view?usp=sharing" },
+        { title: "Bộ câu hỏi ôn tập môn Sinh mức độ vận dụng", subject: "Sinh", type: "Câu hỏi ôn luyện", level: "Vận dụng", link: "https://drive.google.com/file/d/1rACJwNRPDamnI4tNytPt9bvEOy9KQDkl/view?usp=sharing" },
+
+    // --- ĐÁP ÁN CHI TIẾT ---
+        { title: "Đáp án câu hỏi ôn tập môn Toán mức độ nhận biết", subject: "Toán", type: "Đáp án", level: "Nhận biết", link: "https://drive.google.com/file/d/1Jhf4UZ4hgRJy2ohuKuZqgU4u1A0X0HXx/view?usp=sharing" },
+        { title: "Đáp án câu hỏi ôn tập môn Toán mức độ thông hiểu", subject: "Toán", type: "Đáp án", level: "Thông hiểu", link: "https://drive.google.com/file/d/1KQ5HacB_qMXKRBOwUztNM7DqdB_Zn3E4/view?usp=sharing" },
+        { title: "Đáp án câu hỏi ôn tập môn Toán mức độ vận dụng", subject: "Toán", type: "Đáp án", level: "Vận dụng", link: "https://drive.google.com/file/d/1L8AlZHU-c-x8Yka6rsDjnw0dgp93aQu9/view?usp=sharing" },
+        { title: "Đáp án câu hỏi ôn tập môn Toán mức độ vận dụng cao", subject: "Toán", type: "Đáp án", level: "Vận dụng cao", link: "https://drive.google.com/file/d/1wAST6Sw0u4LtF9fCQ1SqQGoWVbsvp_f5/view?usp=sharing" },
+            
+        { title: "Đáp án câu hỏi ôn tập môn Lý mức độ nhận biết", subject: "Lý", type: "Đáp án", level: "Nhận biết", link: "https://drive.google.com/file/d/1sWsThk-E6dlQDPzW4aO-2FRkUpTZSdlm/view?usp=drive_link" },
+        { title: "Đáp án câu hỏi ôn tập Lý mức độ thông hiểu", subject: "Lý", type: "Đáp án", level: "Thông hiểu", link: "https://drive.google.com/file/d/1TXoA_otrYzQz_5dmPBsmkIJY8h_uYTxn/view?usp=drive_link" },
+        { title: "Đáp án câu hỏi ôn tập Lý mức độ vận dụng", subject: "Lý", type: "Đáp án", level: "Vận dụng", link: "https://drive.google.com/file/d/17Bg4k2iB7R316pi9_apy9ixgn06Aj40L/view?usp=drive_link" },
+        { title: "Đáp án câu hỏi ôn tập môn Lý mức độ vận dụng cao", subject: "Lý", type: "Đáp án", level: "Vận dụng cao", link: "https://drive.google.com/file/d/1kF9pqi27-7JbQKVJKn9GTKQQVcbJExw3/view?usp=drive_link" },
+
+        { title: "Đáp án câu hỏi ôn tập môn Sinh mức độ nhận biết", subject: "Sinh", type: "Đáp án", level: "Nhận biết", link: "https://drive.google.com/file/d/1wsa-jxMsDhheYqXKjz0tkHQbDrHOV_Ag/view?usp=sharing" },
+        { title: "Đáp án câu hỏi ôn tập môn Sinh mức độ thông hiểu", subject: "Sinh", type: "Đáp án", level: "Thông hiểu", link: "https://drive.google.com/file/d/1y0gZCMHr4iIg0VJ1-cWiAzgw7gidmzt7/view?usp=sharing" },
+        { title: "Đáp án câu hỏi ôn tập môn Sinh mức độ vận dụng", subject: "Sinh", type: "Đáp án", level: "Vận dụng", link: "https://drive.google.com/file/d/1KjIvXnmXv8fP0ybBn1rUC5q2_szbd8Q5/view?usp=sharing" },
+        
+]
+    // =======================
+    // 2. KIỂM TRA HIỆN MỨC ĐỘ
+    // =======================
+    function kiemtrahienmucdo() {
+        const loaitailieudangchon = document.getElementById("loaitailieu").value;
+        const khungmucdo = document.getElementById("mucdoContainer");
+        const chonmucdo = document.getElementById("mucdo");
+
+        const comucdo = loaitailieudangchon === "Câu hỏi ôn luyện" || loaitailieudangchon === "Đáp án";
+
+        if (comucdo) {
+            khungmucdo.classList.remove("hidden");
+        } else {
+            khungmucdo.classList.add("hidden");
+            chonmucdo.value = "all";
+        }
+        loctailieu();
+    }
+
+    // =======================
+    // 3. LỌC & HIỂN THỊ TÀI LIỆU
+    // =======================
+    function loctailieu() {
+        const mondangchon = document.getElementById("monhoc").value;
+        const loaitailieudangchon = document.getElementById("loaitailieu").value;
+        const mucdodangchon = document.getElementById("mucdo").value;
+            // Ẩn mức "Vận dụng cao" khi chọn môn Sinh
+    const optionVDcao = document.getElementById("vd_cao");
+    const selectMucDo = document.getElementById("mucdo");
+
+    if (mondangchon === "Sinh") {
+        optionVDcao.style.display = "none";
+
+        // Nếu đang chọn Vận dụng cao thì reset về all
+        if (selectMucDo.value === "Vận dụng cao") {
+            selectMucDo.value = "all";
+        }
+    } else {
+        optionVDcao.style.display = "block";
+    }
+
+        const khunghienthi = document.getElementById("gridtailieu");
+        const thongbaotrong = document.getElementById("thongbaotrong");
+
+        khunghienthi.innerHTML = "";
+
+        const danhsachsauloc = danhsachtailieu.filter(tailieu => {
+            const dungmon = mondangchon === "all" || tailieu.subject === mondangchon;
+            const dungloai = loaitailieudangchon === "all" || tailieu.type === loaitailieudangchon;
+
+            let dungmucdo = true;
+            if (loaitailieudangchon === "Câu hỏi ôn luyện" || loaitailieudangchon === "Đáp án") {
+                dungmucdo = mucdodangchon === "all" || tailieu.level === mucdodangchon;
+            }
+
+            return dungmon && dungloai && dungmucdo;
+        });
+
+        if (danhsachsauloc.length === 0) {
+            thongbaotrong.classList.remove("hidden");
+            return;
+        }
+
+        thongbaotrong.classList.add("hidden");
+
+        danhsachsauloc.forEach(tailieu => {
+            const themucdo = tailieu.level ? `<span class="tag tag-lv">${tailieu.level}</span>` : "";
+
+            khunghienthi.innerHTML += `
+                <div class="card">
+                    <div class="tags">
+                        <span class="tag tag-sub">${tailieu.subject}</span>
+                        <span class="tag tag-cat">${tailieu.type}</span>
+                        ${themucdo}
+                    </div>
+                    <h3><i class="far fa-file-pdf" style="color:#d32f2f"></i> ${tailieu.title}</h3>
+                    <div class="actions">
+                        <a href="${tailieu.link}" target="_blank" class="btn btn-view">Xem</a>
+                        <a href="${tailieu.link}" target="_blank" class="btn btn-down">Tải về</a>
+
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    loctailieu();
+</script>
+
+</body>
+</html>
